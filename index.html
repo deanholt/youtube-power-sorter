@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>YouTube Playlist Power Sorter & Player</title>
-    <meta name="version" content="0.2.1" />
+    <meta name="version" content="0.2.2" />
     <style>
       body {
         font-family:
@@ -188,11 +188,6 @@
             allowfullscreen
           ></iframe>
         </div>
-        <div class="backup-bar">
-          <a id="backupLink" href="" target="_blank"
-            >⚠️ Getting an error? Click here to watch this video in a new tab</a
-          >
-        </div>
       </div>
 
       <ul id="results" class="video-list"></ul>
@@ -223,13 +218,9 @@
       function playVideo(videoId) {
         const playerWrapper = document.getElementById("playerWrapper");
         const iframe = document.getElementById("youtubePlayer");
-        const backupLink = document.getElementById("backupLink");
 
-        // The Fix: Using nocookie and passing a fake origin parameter
-        iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&origin=https://localhost`;
-
-        // Set up the backup link
-        backupLink.href = `https://www.youtube.com/watch?v=${videoId}`;
+        // Let Live Server provide the valid origin automatically
+        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
 
         playerWrapper.style.display = "block";
         window.scrollTo({ top: 0, behavior: "smooth" });
