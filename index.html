@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Playlist View Sorter & Player</title>
-    <meta name="version" content="0.3.0">
+    
+    <meta name="version" content="0.3.1">
     
     <style>
         /* Modern, clean base styles */
@@ -13,7 +14,7 @@
         /* Top Control Bar */
         .top-bar { background-color: #212121; padding: 15px 20px; display: flex; gap: 15px; align-items: center; border-bottom: 1px solid #3d3d3d; z-index: 10; }
         
-        /* New Branding & Version Pill Styles */
+        /* Branding & Version Pill Styles */
         .branding { display: flex; align-items: center; margin-right: 15px; }
         .branding h2 { margin: 0; font-size: 18px; font-weight: bold; white-space: nowrap; }
         .version-pill {
@@ -73,8 +74,6 @@
 </head>
 <body>
 
-<script src="https://www.youtube.com/iframe_api"></script>
-
 <div class="top-bar">
     <div class="branding">
         <h2>Power Sorter <span class="version-pill" id="versionDisplay"></span></h2>
@@ -112,29 +111,32 @@
 <script>
     // --- Version Injector ---
     document.addEventListener("DOMContentLoaded", () => {
-        // Grab the content from the meta tag
         const versionNumber = document.querySelector('meta[name="version"]').content;
-        // Inject it into the UI pill
         document.getElementById("versionDisplay").innerText = `v${versionNumber} Beta`;
     });
 
     const formatNumber = (num) => parseInt(num).toLocaleString();
 
-    // Global variables for the player and playlist state
     let player;
     let sortedPlaylistData = [];
     let currentVideoIndex = -1;
 
-    // This function is automatically called by YouTube once their API script loads
+    // Asynchronously load the YouTube IFrame API
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
     function onYouTubeIframeAPIReady() {
-        player = new YT.Player('youtubePlayer', {
+        player = new window.YT.Player('youtubePlayer', {
             height: '100%',
             width: '100%',
-            videoId: '', // Starts empty
+            videoId: '', 
             playerVars: {
                 'autoplay': 1,
-                'rel': 0, // Don't show related videos from other channels
-                'modestbranding': 1
+                'rel': 0, 
+                'modestbranding': 1,
+                'origin': window.location.origin
             },
             events: {
                 'onStateChange': onPlayerStateChange
@@ -142,10 +144,8 @@
         });
     }
 
-    // Listens for when a video ends
     function onPlayerStateChange(event) {
-        // YT.PlayerState.ENDED is 0
-        if (event.data === YT.PlayerState.ENDED) {
+        if (event.data === window.YT.PlayerState.ENDED) {
             playNextVideo();
         }
     }
@@ -170,23 +170,22 @@
         currentVideoIndex = index;
         const video = sortedPlaylistData[index];
         
-        // Load the video via the API
-        if (player && player.loadVideoById) {
+        if (player && typeof player.loadVideoById === 'function') {
             player.loadVideoById(video.videoId);
+        } else {
+            setTimeout(() => playVideo(index), 500);
+            return;
         }
         
-        // Update the titles under the player
         document.getElementById('nowPlayingTitle').innerText = video.title;
         document.getElementById('nowPlayingChannel').innerText = `${video.channel} • ${formatNumber(video.viewCount)} views`;
 
-        // Update the visual selection in the sidebar list
         const allItems = document.querySelectorAll('.video-item');
         allItems.forEach(item => item.classList.remove('active'));
         
         const activeItem = document.getElementById(`video-item-${index}`);
         if (activeItem) {
             activeItem.classList.add('active');
-            // Smoothly scroll the sidebar so the playing video is visible
             activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
@@ -257,16 +256,13 @@
                 };
             });
 
-            // Save to our global array so the player can access it later
             sortedPlaylistData = mergedList.sort((a, b) => b.viewCount - a.viewCount);
-
             statusEl.innerText = `${sortedPlaylistData.length} videos`;
             
             sortedPlaylistData.forEach((video, index) => {
                 const li = document.createElement('li');
                 li.className = 'video-item';
                 li.id = `video-item-${index}`;
-                // Pass the index instead of the ID so the player knows what is "next"
                 li.onclick = () => playVideo(index);
                 
                 li.innerHTML = `
@@ -281,7 +277,6 @@
                 resultsEl.appendChild(li);
             });
 
-            // Automatically start the first video when loading finishes!
             if (sortedPlaylistData.length > 0) {
                 playVideo(0);
             }
