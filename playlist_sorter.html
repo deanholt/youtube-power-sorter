@@ -1,0 +1,330 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Playlist Power Sorter & Player</title>
+    <meta name="version" content="0.1.0" />
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+      }
+
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .input-group {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+
+      button {
+        background-color: #ff0000;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      button:hover {
+        background-color: #cc0000;
+      }
+
+      button:disabled {
+        background-color: #ff9999;
+        cursor: not-allowed;
+      }
+
+      .status {
+        margin-top: 15px;
+        font-style: italic;
+        color: #555;
+      }
+
+      .video-list {
+        list-style: none;
+        padding: 0;
+        margin-top: 20px;
+      }
+
+      .video-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .video-item img {
+        width: 160px;
+        border-radius: 8px;
+        margin-right: 15px;
+      }
+
+      .video-details h3 {
+        margin: 0 0 5px 0;
+        font-size: 16px;
+      }
+
+      .video-details p {
+        margin: 0;
+        color: #606060;
+        font-size: 14px;
+      }
+
+      .views {
+        font-weight: bold;
+        color: #000;
+      }
+
+      .version-pill {
+        background-color: #ffe0e0;
+        color: #cc0000;
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        vertical-align: middle;
+        margin-left: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>
+        Playlist Power Sorter
+        <span class="version-pill" id="versionDisplay"></span>
+      </h2>
+
+      <div class="input-group">
+        <label for="apiKey">YouTube API Key:</label>
+
+        <input type="text" id="apiKey" placeholder="AIzaSy..." />
+      </div>
+
+      <div class="input-group">
+        <label for="playlistId">Playlist ID or URL:</label>
+
+        <input
+          type="text"
+          id="playlistId"
+          value="PLmWYEDTNOGUJVnzG0gqW4x1-9p7ejEy67"
+          placeholder="e.g., PLmWYEDTNOGUJVnzG0gqW4x1-9p7ejEy67"
+        />
+      </div>
+
+      <button id="sortBtn" onclick="processPlaylist()">
+        Fetch and Sort by Views
+      </button>
+
+      <div id="status" class="status"></div>
+
+      <ul id="results" class="video-list"></ul>
+    </div>
+
+    <script>
+      // --- Version Injector ---
+      document.addEventListener("DOMContentLoaded", () => {
+        // Grab the content from the meta tag
+        const versionNumber = document.querySelector(
+          'meta[name="version"]',
+        ).content;
+        // Inject it into the UI pill
+        document.getElementById("versionDisplay").innerText =
+          `v${versionNumber} Beta`;
+      });
+      // Helper function to format numbers with commas
+
+      const formatNumber = (num) => parseInt(num).toLocaleString();
+
+      // Helper function to extract Playlist ID from a full URL
+
+      function extractPlaylistId(input) {
+        if (!input.includes("youtube.com") && !input.includes("youtu.be"))
+          return input;
+
+        const urlParams = new URLSearchParams(new URL(input).search);
+
+        return urlParams.get("list") || input;
+      }
+
+      async function processPlaylist() {
+        const apiKey = document.getElementById("apiKey").value.trim();
+
+        const rawPlaylistId = document
+          .getElementById("playlistId")
+          .value.trim();
+
+        const statusEl = document.getElementById("status");
+
+        const resultsEl = document.getElementById("results");
+
+        const btn = document.getElementById("sortBtn");
+
+        if (!apiKey || !rawPlaylistId) {
+          alert("Please provide both an API Key and a Playlist ID.");
+
+          return;
+        }
+
+        const playlistId = extractPlaylistId(rawPlaylistId);
+
+        btn.disabled = true;
+
+        resultsEl.innerHTML = "";
+
+        try {
+          // 1. Fetch all items in the playlist (handling pagination)
+
+          statusEl.innerText = "Fetching playlist items...";
+
+          let playlistItems = [];
+
+          let nextPageToken = "";
+
+          do {
+            const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}${nextPageToken ? `&pageToken=${nextPageToken}` : ""}`;
+
+            const response = await fetch(url);
+
+            const data = await response.json();
+
+            if (data.error) throw new Error(data.error.message);
+
+            playlistItems.push(...data.items);
+
+            nextPageToken = data.nextPageToken;
+          } while (nextPageToken);
+
+          // Filter out deleted/private videos
+
+          playlistItems = playlistItems.filter(
+            (item) =>
+              item.snippet.title !== "Private video" &&
+              item.snippet.title !== "Deleted video",
+          );
+
+          // 2. Fetch view counts for all videos (API limits 50 videos per request)
+
+          statusEl.innerText = `Fetching view counts for ${playlistItems.length} videos...`;
+
+          const videoIds = playlistItems.map(
+            (item) => item.snippet.resourceId.videoId,
+          );
+
+          const videosData = [];
+
+          // Chunk the IDs into groups of 50
+
+          for (let i = 0; i < videoIds.length; i += 50) {
+            const chunk = videoIds.slice(i, i + 50).join(",");
+
+            const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${chunk}&key=${apiKey}`;
+
+            const statsRes = await fetch(statsUrl);
+
+            const statsData = await statsRes.json();
+
+            if (statsData.error) throw new Error(statsData.error.message);
+
+            videosData.push(...statsData.items);
+          }
+
+          // 3. Merge data and Sort
+
+          statusEl.innerText = "Sorting videos...";
+
+          const mergedList = playlistItems.map((item) => {
+            const videoId = item.snippet.resourceId.videoId;
+
+            const stats = videosData.find((v) => v.id === videoId);
+
+            return {
+              title: item.snippet.title,
+
+              channel: item.snippet.videoOwnerChannelTitle,
+
+              thumbnail: item.snippet.thumbnails?.medium?.url || "",
+
+              videoId: videoId,
+
+              viewCount:
+                stats && stats.statistics.viewCount
+                  ? parseInt(stats.statistics.viewCount, 10)
+                  : 0,
+            };
+          });
+
+          // Sort descending by view count
+
+          mergedList.sort((a, b) => b.viewCount - a.viewCount);
+
+          // 4. Render to screen
+
+          statusEl.innerText = `Successfully loaded and sorted ${mergedList.length} videos.`;
+
+          mergedList.forEach((video, index) => {
+            const li = document.createElement("li");
+
+            li.className = "video-item";
+
+            li.innerHTML = `
+
+                    <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank">
+
+                        <img src="${video.thumbnail}" alt="Thumbnail">
+
+                    </a>
+
+                    <div class="video-details">
+
+                        <h3><a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank" style="text-decoration: none; color: #065fd4;">${index + 1}. ${video.title}</a></h3>
+
+                        <p>${video.channel}</p>
+
+                        <p class="views">${formatNumber(video.viewCount)} views</p>
+
+                    </div>
+
+                `;
+
+            resultsEl.appendChild(li);
+          });
+        } catch (error) {
+          statusEl.innerText = `Error: ${error.message}`;
+
+          statusEl.style.color = "red";
+        } finally {
+          btn.disabled = false;
+        }
+      }
+    </script>
+  </body>
+</html>
