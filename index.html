@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Playlist View Sorter & Player</title>
-    
-    <meta name="version" content="0.3.1">
-    
+    <title>YouTube Playlist Power Sorter & Player</title>
+    <meta name="version" content="0.4.0">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        /* Modern, clean base styles */
         body { font-family: Roboto, Arial, sans-serif; margin: 0; padding: 0; background-color: #0f0f0f; color: #fff; display: flex; flex-direction: column; height: 100vh; }
         
         /* Top Control Bar */
@@ -34,42 +32,51 @@
         .input-group label { font-weight: bold; font-size: 14px; white-space: nowrap; color: #aaa; }
         input[type="text"] { flex: 1; padding: 8px 12px; border: 1px solid #303030; background: #121212; color: #fff; border-radius: 4px; }
         input[type="text"]:focus { outline: 1px solid #3ea6ff; }
-        button { background-color: #cc0000; color: white; border: none; padding: 9px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; white-space: nowrap; }
-        button:hover { background-color: #ff0000; }
+        button.primary-btn { background-color: #cc0000; color: white; border: none; padding: 9px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; white-space: nowrap; }
+        button.primary-btn:hover { background-color: #ff0000; }
         button:disabled { background-color: #555; color: #888; cursor: not-allowed; }
         
-        /* Main Layout: Player Left, List Right */
         .main-layout { display: flex; flex: 1; overflow: hidden; }
         
         /* Video Player Area */
         .player-section { flex: 3; display: flex; flex-direction: column; padding: 20px; background-color: #0f0f0f; min-width: 0; }
         .video-container { position: relative; width: 100%; padding-bottom: 56.25%; background-color: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        
         .now-playing-title { margin-top: 15px; font-size: 20px; font-weight: bold; }
         .now-playing-channel { color: #aaa; font-size: 14px; margin-top: 5px; }
 
         /* Playlist Sidebar Area */
-        .playlist-section { flex: 1; min-width: 350px; max-width: 450px; background-color: #212121; border-left: 1px solid #3d3d3d; display: flex; flex-direction: column; }
-        .playlist-header { padding: 15px; border-bottom: 1px solid #3d3d3d; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between; }
+        .playlist-section { flex: 1; min-width: 380px; max-width: 450px; background-color: #212121; border-left: 1px solid #3d3d3d; display: flex; flex-direction: column; }
+        .playlist-header { padding: 15px; border-bottom: 1px solid #3d3d3d; display: flex; flex-direction: column; gap: 10px; }
+        .header-title { font-weight: bold; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
         #status { font-size: 12px; color: #aaa; font-weight: normal; }
         
+        /* New Sort Controls */
+        .sort-controls { display: flex; gap: 10px; align-items: center; background: #181818; padding: 8px; border-radius: 6px; }
+        .sort-controls select { flex: 1; padding: 8px; background: #212121; color: white; border: 1px solid #3d3d3d; border-radius: 4px; cursor: pointer; }
+        .sort-btn { background: #303030; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .sort-btn:hover { background: #404040; }
+        .sort-btn .material-icons { font-size: 20px; }
+
         .video-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
         .video-list::-webkit-scrollbar { width: 8px; }
         .video-list::-webkit-scrollbar-thumb { background-color: #717171; border-radius: 4px; }
         
         .video-item { display: flex; padding: 10px 15px; cursor: pointer; transition: background-color 0.2s; border-bottom: 1px solid #303030; }
         .video-item:hover { background-color: #3d3d3d; }
-        
-        /* Active Video Styling */
         .video-item.active { background-color: #383838; border-left: 4px solid #cc0000; padding-left: 11px; }
         .video-item.active .video-details h3 { color: #fff; }
         
-        .video-index { width: 20px; font-size: 12px; color: #aaa; display: flex; align-items: center; justify-content: center; margin-right: 10px; }
-        .video-item img { width: 120px; height: 68px; object-fit: cover; border-radius: 8px; margin-right: 12px; pointer-events: none; }
+        .video-index { width: 24px; font-size: 12px; color: #aaa; display: flex; align-items: center; justify-content: center; margin-right: 5px; }
+        
+        .thumbnail-wrapper { position: relative; margin-right: 12px; }
+        .video-item img { width: 120px; height: 68px; object-fit: cover; border-radius: 8px; pointer-events: none; }
+        .duration-badge { position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.8); color: white; font-size: 10px; padding: 2px 4px; border-radius: 4px; font-weight: bold; pointer-events: none; }
+
         .video-details { pointer-events: none; flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
         .video-details h3 { margin: 0 0 4px 0; font-size: 14px; color: #f1f1f1; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .video-details p { margin: 0; color: #aaa; font-size: 12px; }
+        .video-meta { display: flex; gap: 8px; align-items: center; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -78,16 +85,16 @@
     <div class="branding">
         <h2>Power Sorter <span class="version-pill" id="versionDisplay"></span></h2>
     </div>
-
+    
     <div class="input-group">
         <label for="apiKey">API Key:</label>
-        <input type="text" id="apiKey" placeholder="AIzaSy...">
+        <input type="text" id="apiKey" value="">
     </div>
     <div class="input-group">
         <label for="playlistId">Playlist URL:</label>
         <input type="text" id="playlistId" value="PLmWYEDTNOGUJVnzG0gqW4x1-9p7ejEy67">
     </div>
-    <button id="sortBtn" onclick="processPlaylist()">Load & Sort</button>
+    <button class="primary-btn" id="sortBtn" onclick="fetchPlaylistData()">Load Playlist</button>
 </div>
 
 <div class="main-layout">
@@ -101,8 +108,24 @@
     
     <div class="playlist-section">
         <div class="playlist-header">
-            <span>Sorted Playlist</span>
-            <span id="status">Waiting...</span>
+            <div class="header-title">
+                <span>Playlist Content</span>
+                <span id="status">Waiting...</span>
+            </div>
+            <div class="sort-controls">
+                <span class="material-icons" style="color: #aaa; font-size: 20px;">sort</span>
+                <select id="sortProperty" onchange="applySort()">
+                    <option value="default">Playlist Default Order</option>
+                    <option value="views" selected>View Count</option>
+                    <option value="dateAdded">Date Added</option>
+                    <option value="title">Title (A-Z)</option>
+                    <option value="channel">Channel Name</option>
+                    <option value="duration">Duration (Length)</option>
+                </select>
+                <button class="sort-btn" id="sortDirectionBtn" onclick="toggleSortDirection()" title="Toggle Direction">
+                    <span class="material-icons" id="sortDirectionIcon">arrow_downward</span>
+                </button>
+            </div>
         </div>
         <ul id="results" class="video-list"></ul>
     </div>
@@ -118,10 +141,12 @@
     const formatNumber = (num) => parseInt(num).toLocaleString();
 
     let player;
-    let sortedPlaylistData = [];
-    let currentVideoIndex = -1;
+    let rawPlaylistData = []; // Holds the original fetch
+    let sortedPlaylistData = []; // Holds the current sorted view
+    let currentPlayingVideoId = null; // Track by ID, not index, so sorting doesn't break playback
+    let sortDescending = true; // Default direction
 
-    // Asynchronously load the YouTube IFrame API
+    // --- YouTube API Setup ---
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -129,18 +154,9 @@
 
     function onYouTubeIframeAPIReady() {
         player = new window.YT.Player('youtubePlayer', {
-            height: '100%',
-            width: '100%',
-            videoId: '', 
-            playerVars: {
-                'autoplay': 1,
-                'rel': 0, 
-                'modestbranding': 1,
-                'origin': window.location.origin
-            },
-            events: {
-                'onStateChange': onPlayerStateChange
-            }
+            height: '100%', width: '100%', videoId: '', 
+            playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1, 'origin': window.location.origin },
+            events: { 'onStateChange': onPlayerStateChange }
         });
     }
 
@@ -150,15 +166,40 @@
         }
     }
 
+    // --- Helper Functions ---
     function extractPlaylistId(input) {
         if (!input.includes('youtube.com') && !input.includes('youtu.be')) return input;
         const urlParams = new URLSearchParams(new URL(input).search);
         return urlParams.get('list') || input;
     }
 
+    // Converts YouTube's weird duration format (PT1H2M10S) into total seconds for sorting
+    function parseDurationToSeconds(duration) {
+        const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+        const hours = (parseInt(match[1]) || 0);
+        const minutes = (parseInt(match[2]) || 0);
+        const seconds = (parseInt(match[3]) || 0);
+        return hours * 3600 + minutes * 60 + seconds;
+    }
+
+    // Formats seconds into a nice readable clock (1:05:22)
+    function formatDurationText(totalSeconds) {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        if (hours > 0) {
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // --- Playback Logic ---
     function playNextVideo() {
-        if (currentVideoIndex < sortedPlaylistData.length - 1) {
-            playVideo(currentVideoIndex + 1);
+        if (!currentPlayingVideoId) return;
+        // Find where the current video is in the newly sorted list
+        const currentIndex = sortedPlaylistData.findIndex(v => v.videoId === currentPlayingVideoId);
+        if (currentIndex !== -1 && currentIndex < sortedPlaylistData.length - 1) {
+            playVideo(currentIndex + 1);
         } else {
             console.log("End of playlist reached.");
         }
@@ -167,8 +208,8 @@
     function playVideo(index) {
         if (index < 0 || index >= sortedPlaylistData.length) return;
         
-        currentVideoIndex = index;
         const video = sortedPlaylistData[index];
+        currentPlayingVideoId = video.videoId;
         
         if (player && typeof player.loadVideoById === 'function') {
             player.loadVideoById(video.videoId);
@@ -180,21 +221,98 @@
         document.getElementById('nowPlayingTitle').innerText = video.title;
         document.getElementById('nowPlayingChannel').innerText = `${video.channel} • ${formatNumber(video.viewCount)} views`;
 
+        updateActiveHighlight();
+    }
+
+    function updateActiveHighlight() {
         const allItems = document.querySelectorAll('.video-item');
         allItems.forEach(item => item.classList.remove('active'));
         
-        const activeItem = document.getElementById(`video-item-${index}`);
-        if (activeItem) {
-            activeItem.classList.add('active');
-            activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const currentIndex = sortedPlaylistData.findIndex(v => v.videoId === currentPlayingVideoId);
+        if (currentIndex !== -1) {
+            const activeItem = document.getElementById(`video-item-${currentIndex}`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+                activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     }
 
-    async function processPlaylist() {
+    // --- Sorting & Rendering Logic ---
+    function toggleSortDirection() {
+        sortDescending = !sortDescending;
+        const icon = document.getElementById('sortDirectionIcon');
+        // Swap the material icon
+        icon.innerText = sortDescending ? 'arrow_downward' : 'arrow_upward';
+        applySort();
+    }
+
+    function applySort() {
+        const property = document.getElementById('sortProperty').value;
+        
+        // Copy the raw data so we don't destroy the original order
+        sortedPlaylistData = [...rawPlaylistData];
+
+        if (property !== 'default') {
+            sortedPlaylistData.sort((a, b) => {
+                let valA = a[property];
+                let valB = b[property];
+                
+                // Handle string comparisons (Title, Channel)
+                if (typeof valA === 'string') {
+                    const comp = valA.localeCompare(valB);
+                    return sortDescending ? comp * -1 : comp;
+                }
+                
+                // Handle numeric/date comparisons (Views, Date, Duration)
+                return sortDescending ? valB - valA : valA - valB;
+            });
+        } else {
+            // If default, reverse the array if ascending is selected
+            if (!sortDescending) sortedPlaylistData.reverse();
+        }
+
+        renderPlaylistDOM();
+        updateActiveHighlight(); // Re-highlight the playing video in its new position
+    }
+
+    function renderPlaylistDOM() {
+        const resultsEl = document.getElementById('results');
+        resultsEl.innerHTML = '';
+        
+        sortedPlaylistData.forEach((video, index) => {
+            const li = document.createElement('li');
+            li.className = 'video-item';
+            li.id = `video-item-${index}`;
+            li.onclick = () => playVideo(index);
+            
+            // Format the date for display
+            const dateObj = new Date(video.dateAdded);
+            const dateString = dateObj.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            
+            li.innerHTML = `
+                <div class="video-index">${index + 1}</div>
+                <div class="thumbnail-wrapper">
+                    <img src="${video.thumbnail}" alt="Thumbnail">
+                    <div class="duration-badge">${video.durationText}</div>
+                </div>
+                <div class="video-details">
+                    <h3>${video.title}</h3>
+                    <p>${video.channel}</p>
+                    <div class="video-meta">
+                        <p>${formatNumber(video.viewCount)} views • ${dateString}</p>
+                    </div>
+                </div>
+            `;
+            resultsEl.appendChild(li);
+        });
+    }
+
+    // --- Data Fetching ---
+    async function fetchPlaylistData() {
         const apiKey = document.getElementById('apiKey').value.trim();
         const rawPlaylistId = document.getElementById('playlistId').value.trim();
         const statusEl = document.getElementById('status');
-        const resultsEl = document.getElementById('results');
         const btn = document.getElementById('sortBtn');
 
         if (!apiKey || !rawPlaylistId) {
@@ -204,9 +322,9 @@
 
         const playlistId = extractPlaylistId(rawPlaylistId);
         btn.disabled = true;
-        resultsEl.innerHTML = '';
-        sortedPlaylistData = [];
-        currentVideoIndex = -1;
+        document.getElementById('results').innerHTML = '';
+        rawPlaylistData = [];
+        currentPlayingVideoId = null;
         
         try {
             statusEl.innerText = "Fetching items...";
@@ -215,13 +333,10 @@
             
             do {
                 let url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
-                if (nextPageToken) {
-                    url += `&pageToken=${nextPageToken}`;
-                }
+                if (nextPageToken) url += `&pageToken=${nextPageToken}`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
-                
                 if (data.error) throw new Error(data.error.message);
                 
                 playlistItems.push(...data.items);
@@ -230,53 +345,48 @@
 
             playlistItems = playlistItems.filter(item => item.snippet.title !== 'Private video' && item.snippet.title !== 'Deleted video');
             
-            statusEl.innerText = "Fetching view counts...";
+            statusEl.innerText = "Fetching video details...";
             const videoIds = playlistItems.map(item => item.snippet.resourceId.videoId);
             const videosData = [];
 
+            // We added 'contentDetails' to get the video duration!
             for (let i = 0; i < videoIds.length; i += 50) {
                 const chunk = videoIds.slice(i, i + 50).join(',');
-                const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${chunk}&key=${apiKey}`;
+                const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id=${chunk}&key=${apiKey}`;
                 const statsRes = await fetch(statsUrl);
                 const statsData = await statsRes.json();
                 if (statsData.error) throw new Error(statsData.error.message);
                 videosData.push(...statsData.items);
             }
 
-            statusEl.innerText = "Sorting videos...";
-            const mergedList = playlistItems.map(item => {
+            statusEl.innerText = "Processing data...";
+            rawPlaylistData = playlistItems.map((item, index) => {
                 const videoId = item.snippet.resourceId.videoId;
-                const stats = videosData.find(v => v.id === videoId);
+                const details = videosData.find(v => v.id === videoId);
+                
+                // Parse duration
+                const rawDuration = details?.contentDetails?.duration || "PT0S";
+                const durationSeconds = parseDurationToSeconds(rawDuration);
+
                 return {
+                    originalIndex: index, // Used for 'default' sort
                     title: item.snippet.title,
                     channel: item.snippet.videoOwnerChannelTitle,
                     thumbnail: item.snippet.thumbnails?.medium?.url || '',
                     videoId: videoId,
-                    viewCount: stats && stats.statistics.viewCount ? parseInt(stats.statistics.viewCount, 10) : 0
+                    viewCount: details?.statistics?.viewCount ? parseInt(details.statistics.viewCount, 10) : 0,
+                    dateAdded: new Date(item.snippet.publishedAt).getTime(), // Convert to timestamp for math sorting
+                    duration: durationSeconds,
+                    durationText: formatDurationText(durationSeconds)
                 };
             });
 
-            sortedPlaylistData = mergedList.sort((a, b) => b.viewCount - a.viewCount);
-            statusEl.innerText = `${sortedPlaylistData.length} videos`;
+            statusEl.innerText = `${rawPlaylistData.length} videos loaded.`;
             
-            sortedPlaylistData.forEach((video, index) => {
-                const li = document.createElement('li');
-                li.className = 'video-item';
-                li.id = `video-item-${index}`;
-                li.onclick = () => playVideo(index);
-                
-                li.innerHTML = `
-                    <div class="video-index">${index + 1}</div>
-                    <img src="${video.thumbnail}" alt="Thumbnail">
-                    <div class="video-details">
-                        <h3>${video.title}</h3>
-                        <p>${video.channel}</p>
-                        <p>${formatNumber(video.viewCount)} views</p>
-                    </div>
-                `;
-                resultsEl.appendChild(li);
-            });
+            // Force the initial sort and render
+            applySort();
 
+            // Start playing the first video in the newly sorted list
             if (sortedPlaylistData.length > 0) {
                 playVideo(0);
             }
