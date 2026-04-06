@@ -61,12 +61,13 @@ If you don't have a YouTube Data API v3 key, you can get one for free:
 
 ## 📖 Release History
 
-  * **v1.1.0:** Implemented dynamic responsive layout for seamless mobile and tablet viewing.
-  * **v1.0.0:** Official stable release.
-  * **v0.4.x:** Introduced comprehensive multi-property sorting (Date, Duration, Title, Channel) and robust duration parsing.
-  * **v0.3.x:** Completely overhauled UI to a modern dark-mode layout and integrated asynchronous API loading for stable playback.
-  * **v0.2.x:** Integrated the native YouTube IFrame player for seamless, in-app viewing.
-  * **v0.1.0:** Initial proof-of-concept.
+* **v1.2.0:** Implemented persistent `localStorage` for API keys, a secure settings modal, and a sliding UI drawer for a cleaner viewing experience.
+* **v1.1.0:** Implemented dynamic responsive layout for seamless mobile and tablet viewing.
+* **v1.0.0:** Official stable release.
+* **v0.4.x:** Introduced comprehensive multi-property sorting (Date, Duration, Title, Channel) and robust duration parsing.
+* **v0.3.x:** Completely overhauled UI to a modern dark-mode layout and integrated asynchronous API loading for stable playback.
+* **v0.2.x:** Integrated the native YouTube IFrame player for seamless, in-app viewing.
+* **v0.1.0:** Initial proof-of-concept.
 
 ## 📝 License
 
