@@ -4,71 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>YouTube Playlist Power Sorter & Player</title>
-    <meta name="version" content="1.1.0" />
+    <meta name="version" content="1.2.0" />
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
     <style>
-      /* --- Mobile & Tablet Responsive Layout --- */
-      @media (max-width: 1024px) {
-        /* Triggers on iPad Portrait and below */
-        /* Use Dynamic Viewport Height to fix mobile browser URL bar gaps */
-        body {
-          height: 100dvh;
-        }
-
-        .top-bar {
-          flex-wrap: wrap;
-          padding: 10px 15px;
-          gap: 10px;
-        }
-        .branding {
-          width: 100%;
-          justify-content: center;
-          margin-right: 0;
-          margin-bottom: 5px;
-        }
-        .input-group {
-          flex: 1 1 100%;
-        }
-        button.primary-btn {
-          width: 100%;
-        }
-
-        .main-layout {
-          flex-direction: column;
-        }
-
-        /* Sledgehammer fix: Force player to shrink-wrap, kill all flex-grow */
-        .player-section {
-          flex: none !important;
-          width: 100%;
-          padding: 15px;
-          box-sizing: border-box;
-          z-index: 5;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Sledgehammer fix: Force playlist to expand full width and fill remaining height */
-        .playlist-section {
-          flex: 1 1 0 !important;
-          max-width: none !important; /* Kills the desktop 450px cutoff */
-          width: 100%;
-          min-height: 0; /* CRUCIAL: stops the flex-column from overflowing */
-          border-left: none;
-        }
-
-        /* Keep sort controls inline and native size */
-        .sort-controls {
-          display: flex;
-          gap: 10px;
-        }
-        .sort-controls select {
-          flex: 1;
-          margin-bottom: 0;
-        }
-      }
       body {
         font-family: Roboto, Arial, sans-serif;
         margin: 0;
@@ -80,6 +21,7 @@
         height: 100vh;
       }
 
+      /* Top Control Bar */
       .top-bar {
         background-color: #212121;
         padding: 15px 20px;
@@ -102,7 +44,6 @@
         white-space: nowrap;
       }
 
-      /* v1.0.0 Stable Green Pill */
       .version-pill {
         background-color: #e6f4ea;
         color: #137333;
@@ -114,6 +55,40 @@
         font-weight: bold;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+      }
+
+      .settings-icon {
+        margin-left: 10px;
+        color: #aaa;
+        cursor: pointer;
+        transition:
+          color 0.2s,
+          transform 0.2s;
+        font-size: 20px;
+      }
+      .settings-icon:hover {
+        color: #fff;
+        transform: rotate(45deg);
+      }
+
+      /* Sliding Drawer for Inputs */
+      .drawer {
+        display: flex;
+        gap: 10px;
+        flex: 1;
+        overflow: hidden;
+        transition:
+          max-height 0.3s ease-out,
+          opacity 0.3s;
+        max-height: 50px;
+        opacity: 1;
+        align-items: center;
+      }
+      .drawer.hidden {
+        max-height: 0;
+        opacity: 0;
+        pointer-events: none;
+        margin: 0;
       }
 
       .input-group {
@@ -156,6 +131,55 @@
         background-color: #555;
         color: #888;
         cursor: not-allowed;
+      }
+
+      /* Modal Styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      .modal-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .modal-content {
+        background: #212121;
+        padding: 25px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 450px;
+        border: 1px solid #3d3d3d;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      }
+      .modal-content h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .modal-content p {
+        color: #aaa;
+        font-size: 14px;
+        line-height: 1.4;
+        margin-bottom: 20px;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
       }
 
       .main-layout {
@@ -361,31 +385,112 @@
         align-items: center;
         margin-top: 2px;
       }
+      /* --- Mobile & Tablet Responsive Layout --- */
+      @media (max-width: 1024px) {
+        body {
+          height: 100dvh;
+        }
+        .top-bar {
+          flex-wrap: wrap;
+          padding: 10px 15px;
+          gap: 10px;
+        }
+        .branding {
+          width: 100%;
+          justify-content: center;
+          margin-right: 0;
+          margin-bottom: 5px;
+        }
+
+        .drawer {
+          flex-wrap: wrap;
+          max-height: 120px;
+          width: 100%;
+        }
+        .drawer.hidden {
+          max-height: 0;
+        }
+        .input-group {
+          flex: 1 1 100%;
+        }
+        button.primary-btn,
+        button#newPlaylistBtn {
+          width: 100%;
+        }
+
+        .main-layout {
+          flex-direction: column;
+        }
+        .player-section {
+          flex: none !important;
+          width: 100%;
+          padding: 15px;
+          box-sizing: border-box;
+          z-index: 5;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        .playlist-section {
+          flex: 1 1 0 !important;
+          max-width: none !important;
+          width: 100%;
+          min-height: 0;
+          border-left: none;
+        }
+        .sort-controls {
+          display: flex;
+          gap: 10px;
+        }
+        .sort-controls select {
+          flex: 1;
+          margin-bottom: 0;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="top-bar">
-      <div class="branding">
-        <h2>
-          Power Sorter <span class="version-pill" id="versionDisplay"></span>
-        </h2>
-      </div>
-      <div class="input-group">
-        <label for="apiKey">API Key:</label>
-        <input type="text" id="apiKey" value="" />
-      </div>
-      <div class="input-group">
-        <label for="playlistId">Playlist URL:</label>
+    <div id="settingsModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3><span class="material-icons">vpn_key</span> API Configuration</h3>
+        <p>
+          This app runs 100% in your browser. To fetch YouTube data, provide
+          your free Google Cloud API key. It will be securely stored in your
+          browser's local storage.
+        </p>
         <input
           type="text"
-          id="playlistId"
-          value="PLmWYEDTNOGUJVnzG0gqW4x1-9p7ejEy67"
+          id="modalApiKey"
+          placeholder="AIzaSy..."
+          style="width: 100%; box-sizing: border-box"
         />
+        <div class="modal-actions">
+          <button
+            class="secondary-btn"
+            id="closeModalBtn"
+            onclick="closeModal()"
+          >
+            Cancel
+          </button>
+          <button class="primary-btn" onclick="saveApiKey()">Save Key</button>
+        </div>
       </div>
-      <button class="primary-btn" id="sortBtn" onclick="fetchPlaylistData()">
-        Load Playlist
-      </button>
     </div>
+
+   <div class="top-bar">
+    <div class="branding">
+        <h2>Power Sorter <span class="version-pill" id="versionDisplay"></span></h2>
+        <span class="material-icons settings-icon" onclick="openModal()" title="API Settings">settings</span>
+    </div>
+    
+    <div id="playlistDrawer" class="drawer">
+        <div class="input-group">
+            <label for="playlistId">Playlist URL:</label>
+            <input type="text" id="playlistId" value="PLmWYEDTNOGUJVnzG0gqW4x1-9p7ejEy67">
+        </div>
+        <button class="primary-btn" id="sortBtn" onclick="fetchPlaylistData()">Load Playlist</button>
+    </div>
+
+    <button id="newPlaylistBtn" class="secondary-btn" style="display: none;" onclick="toggleDrawer(true)">Load Different Playlist</button>
+</div>
 
     <div class="main-layout">
       <div class="player-section">
@@ -433,15 +538,60 @@
     </div>
 
     <script>
-      // --- Version Injector (Beta tag removed) ---
-      document.addEventListener("DOMContentLoaded", () => {
-        const versionNumber = document.querySelector(
-          'meta[name="version"]',
-        ).content;
-        document.getElementById("versionDisplay").innerText =
-          `v${versionNumber}`;
-      });
+// --- Version Injector & Initialization ---
+    document.addEventListener("DOMContentLoaded", () => {
+        const versionNumber = document.querySelector('meta[name="version"]').content;
+        document.getElementById("versionDisplay").innerText = `v${versionNumber}`;
+        checkApiKey();
+    });
 
+// --- State Management (LocalStorage & UI) ---
+    let userApiKey = "";
+
+    function checkApiKey() {
+        const savedKey = localStorage.getItem("ytPowerSorter_apiKey");
+        if (savedKey) {
+            userApiKey = savedKey;
+        } else {
+            openModal(true); // true = force open, can't be dismissed
+        }
+    }
+
+    function openModal(force = false) {
+        document.getElementById("settingsModal").classList.add("active");
+        document.getElementById("modalApiKey").value = userApiKey;
+        // If forcing them to enter a key (first time), hide the cancel button
+        document.getElementById("closeModalBtn").style.display = force ? "none" : "block";
+    }
+
+    function closeModal() {
+        document.getElementById("settingsModal").classList.remove("active");
+    }
+
+    function saveApiKey() {
+        const key = document.getElementById("modalApiKey").value.trim();
+        if (key) {
+            userApiKey = key;
+            localStorage.setItem("ytPowerSorter_apiKey", key);
+            closeModal();
+        } else {
+            alert("Please enter a valid API key.");
+        }
+    }
+
+    function toggleDrawer(show) {
+        const drawer = document.getElementById("playlistDrawer");
+        const newBtn = document.getElementById("newPlaylistBtn");
+        if (show) {
+            drawer.classList.remove("hidden");
+            newBtn.style.display = "none";
+        } else {
+            drawer.classList.add("hidden");
+            newBtn.style.display = "block";
+        }
+    }
+
+    // --- Core Logic ---
       const formatNumber = (num) => parseInt(num).toLocaleString();
 
       let player;
@@ -624,16 +774,19 @@
       }
 
       async function fetchPlaylistData() {
-        const apiKey = document.getElementById("apiKey").value.trim();
+if (!userApiKey) {
+            openModal(true);
+            return;
+        }
         const rawPlaylistId = document
           .getElementById("playlistId")
           .value.trim();
         const statusEl = document.getElementById("status");
         const btn = document.getElementById("sortBtn");
 
-        if (!apiKey || !rawPlaylistId) {
-          alert("Please provide both an API Key and a Playlist ID.");
-          return;
+if (!rawPlaylistId) {
+            alert("Please provide a Playlist ID.");
+            return;
         }
 
         const playlistId = extractPlaylistId(rawPlaylistId);
@@ -648,12 +801,20 @@
           let nextPageToken = "";
 
           do {
-            let url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
+            let url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${userApiKey}`;
             if (nextPageToken) url += `&pageToken=${nextPageToken}`;
 
             const response = await fetch(url);
             const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
+            // If API key is rejected by Google, clear it from memory and ask again
+                if (data.error) {
+                    if (data.error.code === 400 || data.error.code === 403) {
+                        localStorage.removeItem("ytPowerSorter_apiKey");
+                        userApiKey = "";
+                        openModal(true);
+                    }
+                    throw new Error(data.error.message);
+                }
 
             playlistItems.push(...data.items);
             nextPageToken = data.nextPageToken;
@@ -673,7 +834,7 @@
 
           for (let i = 0; i < videoIds.length; i += 50) {
             const chunk = videoIds.slice(i, i + 50).join(",");
-            const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id=${chunk}&key=${apiKey}`;
+            const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id=${chunk}&key=${userApiKey}`;
             const statsRes = await fetch(statsUrl);
             const statsData = await statsRes.json();
             if (statsData.error) throw new Error(statsData.error.message);
@@ -704,6 +865,9 @@
           });
 
           statusEl.innerText = `${rawPlaylistData.length} videos loaded.`;
+
+// Success! Tuck the drawer away and show the new button
+            toggleDrawer(false);
 
           applySort();
 
