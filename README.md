@@ -61,6 +61,7 @@ If you don't have a YouTube Data API v3 key, you can get one for free:
 
 ## 📖 Release History
 
+  * **v1.1.0:** Implemented dynamic responsive layout for seamless mobile and tablet viewing.
   * **v1.0.0:** Official stable release.
   * **v0.4.x:** Introduced comprehensive multi-property sorting (Date, Duration, Title, Channel) and robust duration parsing.
   * **v0.3.x:** Completely overhauled UI to a modern dark-mode layout and integrated asynchronous API loading for stable playback.
